@@ -32,9 +32,9 @@ export interface Match {
 
 export interface MatchWithRatings<TRating> {
   id: number;
-  whitePlayerOne: PlayerWithRating<TRating>;
+  whitePlayerOne: PlayerWithRating<TRating> | null;
   whitePlayerTwo: PlayerWithRating<TRating> | null;
-  blackPlayerOne: PlayerWithRating<TRating>;
+  blackPlayerOne: PlayerWithRating<TRating> | null;
   blackPlayerTwo: PlayerWithRating<TRating> | null;
   result: Winner;
   scoreDiff: number;
