@@ -10,7 +10,7 @@ import { getMatches } from "../db/queries/matchQueries";
 import { getActiveSeason } from "../db/queries/seasonQueries";
 import { isHxRequest } from "../lib";
 import MatchStatistics, { type RESULT } from "../lib/matchStatistics";
-import { getRatings, getRatingSystem } from "../lib/rating";
+import { getRatingSystem } from "../lib/rating";
 
 const playerPaginationQuery = async (page: number) => {
   const pageSize = 15;
@@ -20,7 +20,7 @@ const playerPaginationQuery = async (page: number) => {
 
   const matches = await getMatches(activeSeasonId);
   const ratingSystem = getRatingSystem(activeSeasonRatingSystemType);
-  const players = getRatings(matches, ratingSystem);
+  const players = ratingSystem.calculateRatings(matches);
 
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;

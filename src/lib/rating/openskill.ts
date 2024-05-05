@@ -4,6 +4,7 @@ import {
   type Options,
 } from "openskill/dist/types";
 import {
+  type Match,
   type MatchWithRatings,
   type PlayerWithRating,
   type RatingSystem,
@@ -68,6 +69,39 @@ function rateMatch(
   return result;
 }
 
+function calculateRatings(
+  matches: Match[],
+  selectedOptions: Options,
+): PlayerWithRating<OpenskillRating>[] {
+  const ratings: Record<string, PlayerWithRating<OpenskillRating>> = {};
+  const getRating = (playerId: string | null | undefined) =>
+    !playerId ? null : ratings[playerId] ?? rating(selectedOptions);
+
+  const sortedMatches = matches.toSorted(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+  );
+
+  for (const match of sortedMatches) {
+    const matchWithRatings: MatchWithRatings<OpenskillRating> = {
+      ...match,
+      whitePlayerOne: getRating(match.whitePlayerOne?.id),
+      whitePlayerTwo: getRating(match.whitePlayerTwo?.id),
+      blackPlayerOne: getRating(match.blackPlayerOne?.id),
+      blackPlayerTwo: getRating(match.blackPlayerTwo?.id),
+    };
+
+    const newRatings = rateMatch(matchWithRatings, selectedOptions);
+    for (const newRating of newRatings) {
+      ratings[newRating.player.id] = newRating;
+    }
+  }
+
+  return Object.values(ratings).toSorted(
+    (a, b) =>
+      toNumber(b.rating, selectedOptions) - toNumber(a.rating, selectedOptions),
+  );
+}
+
 function toNumber(rating: OpenskillRating, selectedOptions: Options) {
   return Math.floor(ordinal(rating, selectedOptions));
 }
@@ -84,5 +118,6 @@ export function openskill(options?: Options): RatingSystem<OpenskillRating> {
     defaultRating: rating(selectedOptions),
     toNumber: (x) => toNumber(x, selectedOptions),
     rateMatch: (x) => rateMatch(x, selectedOptions),
+    calculateRatings: (x) => calculateRatings(x, selectedOptions),
   };
 }

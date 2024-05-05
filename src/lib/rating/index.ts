@@ -9,6 +9,7 @@ export type Rating = EloRating | OpenskillRating;
 export interface RatingSystem<TRating> {
   defaultRating: TRating;
   rateMatch: (match: MatchWithRatings<TRating>) => PlayerWithRating<TRating>[];
+  calculateRatings: (matches: Match[]) => PlayerWithRating<TRating>[];
   toNumber: (rating: TRating) => number;
 }
 
@@ -39,50 +40,6 @@ export interface MatchWithRatings<TRating> {
   result: Winner;
   scoreDiff: number;
   createdAt: Date;
-}
-
-export function getRatings<TRating>(
-  matches: Match[],
-  system: RatingSystem<TRating>,
-): PlayerWithRating<TRating>[] {
-  const ratings: Record<string, PlayerWithRating<TRating>> = {};
-
-  for (const match of matches.sort(
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-  )) {
-    const matchWithRatings: MatchWithRatings<TRating> = {
-      ...match,
-      whitePlayerOne: ratings[match.whitePlayerOne.id] ?? {
-        player: match.whitePlayerOne,
-        rating: system.defaultRating,
-      },
-      whitePlayerTwo: match.whitePlayerTwo
-        ? ratings[match.whitePlayerTwo.id] ?? {
-            player: match.whitePlayerTwo,
-            rating: system.defaultRating,
-          }
-        : null,
-      blackPlayerOne: ratings[match.blackPlayerOne.id] ?? {
-        player: match.blackPlayerOne,
-        rating: system.defaultRating,
-      },
-      blackPlayerTwo: match.blackPlayerTwo
-        ? ratings[match.blackPlayerTwo.id] ?? {
-            player: match.blackPlayerTwo,
-            rating: system.defaultRating,
-          }
-        : null,
-    };
-
-    const newRatings = system.rateMatch(matchWithRatings);
-    for (const newRating of newRatings) {
-      ratings[newRating.player.id] = newRating;
-    }
-  }
-
-  return Object.values(ratings).toSorted(
-    (a, b) => system.toNumber(b.rating) - system.toNumber(a.rating),
-  );
 }
 
 export function getPlayerRatingHistory<TRating>(

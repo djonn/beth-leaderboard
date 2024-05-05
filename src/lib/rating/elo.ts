@@ -1,4 +1,5 @@
 import {
+  type Match,
   type MatchWithRatings,
   type PlayerWithRating,
   type RatingSystem,
@@ -115,6 +116,35 @@ function rateMatch(
   return result;
 }
 
+function calculateRatings(matches: Match[]): PlayerWithRating<EloRating>[] {
+  const ratings: Record<string, PlayerWithRating<EloRating>> = {};
+  const getRating = (playerId: string | null | undefined) =>
+    !playerId ? null : ratings[playerId] ?? defaultRating;
+
+  const sortedMatches = matches.toSorted(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+  );
+
+  for (const match of sortedMatches) {
+    const matchWithRatings: MatchWithRatings<EloRating> = {
+      ...match,
+      whitePlayerOne: getRating(match.whitePlayerOne?.id),
+      whitePlayerTwo: getRating(match.whitePlayerTwo?.id),
+      blackPlayerOne: getRating(match.blackPlayerOne?.id),
+      blackPlayerTwo: getRating(match.blackPlayerTwo?.id),
+    };
+
+    const newRatings = rateMatch(matchWithRatings);
+    for (const newRating of newRatings) {
+      ratings[newRating.player.id] = newRating;
+    }
+  }
+
+  return Object.values(ratings).toSorted(
+    (a, b) => toNumber(b.rating) - toNumber(a.rating),
+  );
+}
+
 function toNumber(score: EloRating) {
   return Math.floor(score);
 }
@@ -124,5 +154,6 @@ export function elo(): RatingSystem<EloRating> {
     defaultRating,
     toNumber,
     rateMatch,
+    calculateRatings,
   };
 }
